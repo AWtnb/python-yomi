@@ -33,7 +33,7 @@ class SudachiToken:
         self._reading = morpheme.reading_form()
 
     @property
-    def katakana_surface(self) -> str:
+    def _katakana_surface(self) -> str:
         return "".join(
             [
                 chr(ord(c) + 96) if (0x3041 <= ord(c) and ord(c) <= 0x3094) else c
@@ -50,7 +50,7 @@ class SudachiToken:
     def reading(self) -> str:
         if self._is_verbatim():
             if re.match(r"[ぁ-ん]", self._surface):
-                return self.katakana_surface
+                return self._katakana_surface
             return self._surface
 
         if len(self._reading) < 1:
