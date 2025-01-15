@@ -17,6 +17,7 @@
 import re
 from collections.abc import Iterator
 from pathlib import Path
+from typing import List
 
 import pyperclip
 from sudachipy import Tokenizer, Dictionary, Morpheme
@@ -63,6 +64,9 @@ class TokenWrapper:
         self.detail = "{}({})".format(surface, self.reading)
 
 
+SUDACHI_TOKENIZER = Dictionary().create()
+
+
 class ParsedLine:
     reg_paren = re.compile(r"\(.+?\)|\[.+?\]|\uff08.+?\uff09|\uff3b.+?\uff3d")
     reg_noise = re.compile(r"　　[^\d]?\d.*$|　→.+$")
@@ -70,7 +74,6 @@ class ParsedLine:
     def __init__(self, line: str) -> None:
         self.raw_line = line
         self.line = line
-        self.tokens = []
 
     def trim_paren(self) -> None:
         self.line = self.reg_paren.sub("", self.line)
@@ -78,24 +81,14 @@ class ParsedLine:
     def trim_noise(self) -> None:
         self.line = self.reg_noise.sub("", self.line)
 
-
-def tokenizeLines(
-    lines: list[str], ignore_paren: bool = False, focus_name: bool = False
-) -> Iterator[ParsedLine]:
-    tknzr = Dictionary().create()
-    for line in lines:
-        if len(line.strip()) < 1:
-            yield ParsedLine("")
-        else:
-            pl = ParsedLine(line)
-            if ignore_paren:
-                pl.trim_paren()
-            if focus_name:
-                pl.trim_noise()
-            for morpheme in tknzr.tokenize(pl.line, Tokenizer.SplitMode.C):
-                st = SudachiToken(morpheme)
-                pl.tokens.append(st)
-            yield pl
+    @property
+    def tokens(self) -> List[SudachiToken]:
+        if len(self.line.strip()) < 1:
+            return []
+        return [
+            SudachiToken(morpheme)
+            for morpheme in SUDACHI_TOKENIZER.tokenize(self.line, Tokenizer.SplitMode.C)
+        ]
 
 
 def main():
@@ -106,12 +99,15 @@ def main():
         return
 
     out = []
-    for line in tokenizeLines(lines, True, True):
-        tokens = [TokenWrapper(token) for token in line.tokens]
+    for line in lines:
+        pl = ParsedLine(line)
+        pl.trim_noise()
+        pl.trim_paren()
+        tokens = [TokenWrapper(token) for token in pl.tokens]
         reading = "".join([token.reading for token in tokens])
         detail = " / ".join([token.detail for token in tokens])
 
-        out.append("\t".join([line.raw_line, reading, detail]))
+        out.append("\t".join([line, reading, detail]))
 
     Path("out/out.txt").write_text("\n".join(out), encoding="utf-8")
 
