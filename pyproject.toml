@@ -1,0 +1,11 @@
+[project]
+name = "python-yomi"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyperclip>=1.9.0",
+    "sudachidict-core>=20241021",
+    "sudachipy>=0.6.10",
+]
