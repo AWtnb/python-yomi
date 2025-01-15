@@ -15,7 +15,6 @@
 """
 
 import re
-from collections.abc import Iterator
 from pathlib import Path
 from typing import List
 
@@ -24,44 +23,50 @@ from sudachipy import Tokenizer, Dictionary, Morpheme
 
 
 class SudachiToken:
+    reg = re.compile(
+        r"^([ぁ-んァ-ヴ・ー]|[a-zA-Z\uff41-\uff5a\uff21-\uff3a]|[0-9\uff10-\uff19]|[\W\s])+$"
+    )
+
     def __init__(self, morpheme: Morpheme) -> None:
-        self.surface = morpheme.surface()
-        self.pos = morpheme.part_of_speech()[0]
-        self.reading = morpheme.reading_form()
+        self._surface = morpheme.surface()
+        self._pos = morpheme.part_of_speech()[0]
+        self._reading = morpheme.reading_form()
 
     @property
     def katakana_surface(self) -> str:
         return "".join(
             [
                 chr(ord(c) + 96) if (0x3041 <= ord(c) and ord(c) <= 0x3094) else c
-                for c in self.surface
+                for c in self._surface
             ]
         )
 
+    def _is_verbatim(self) -> bool:
+        return (
+            "記号" in self._pos or "空白" in self._pos or self.reg.match(self._surface)
+        )
 
-class TokenWrapper:
-    reg = re.compile(
-        r"^([ぁ-んァ-ヴ・ー]|[a-zA-Z\uff41-\uff5a\uff21-\uff3a]|[0-9\uff10-\uff19]|[\W\s])+$"
-    )
+    @property
+    def reading(self) -> str:
+        if self._is_verbatim():
+            if re.match(r"[ぁ-ん]", self._surface):
+                return self.katakana_surface
+            return self._surface
 
-    def __init__(self, token: SudachiToken) -> None:
-        surface = token.surface
+        if len(self._reading) < 1:
+            return self._surface
 
-        if "記号" in token.pos or "空白" in token.pos or self.reg.match(surface):
-            if re.match(r"[ぁ-ん]", surface):
-                self.reading = token.katakana_surface
-            else:
-                self.reading = surface
-            self.detail = surface
-            return
+        return self._reading
 
-        if len(token.reading) < 1:
-            self.reading = surface
-            self.detail = surface + "(?)"
-            return
+    @property
+    def detail(self) -> str:
+        if self._is_verbatim():
+            return self._surface
 
-        self.reading = token.reading
-        self.detail = "{}({})".format(surface, self.reading)
+        if len(self._reading) < 1:
+            return self._surface + "(?)"
+
+        return "{}({})".format(self._surface, self._reading)
 
 
 SUDACHI_TOKENIZER = Dictionary().create()
@@ -103,7 +108,7 @@ def main():
         pl = ParsedLine(line)
         pl.trim_noise()
         pl.trim_paren()
-        tokens = [TokenWrapper(token) for token in pl.tokens]
+        tokens = pl.tokens
         reading = "".join([token.reading for token in tokens])
         detail = " / ".join([token.detail for token in tokens])
 
