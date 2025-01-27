@@ -15,6 +15,7 @@
 """
 
 import re
+import sys
 from pathlib import Path
 from typing import List
 
@@ -96,11 +97,30 @@ class ParsedLine:
         ]
 
 
-def main():
-    lines = pyperclip.paste().splitlines()
+def read_file(path: str) -> list:
+    if len(path) < 1:
+        c = pyperclip.paste()
+        if len(c) < 1:
+            print("Clipboard is empty.")
+            return []
+        return c.splitlines()
+
+    p = Path(path)
+    if not p.exists():
+        print("Invalid path.")
+        return []
+
+    t = p.read_text(encoding="utf-8")
+    if len(t) < 1:
+        print("Empty file.")
+        return []
+    return t.splitlines()
+
+
+def main(path: str):
+    lines = read_file(path)
 
     if len(lines) < 1:
-        print("No text is copied on clipboard.")
         return
 
     out = []
@@ -118,4 +138,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = sys.argv
+    path = args[1] if 1 < len(args) else ""
+    main(path)

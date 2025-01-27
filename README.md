@@ -10,6 +10,11 @@ PS> cat .\out\out.txt|ConvertFrom-Csv -Delimiter "`t" -Header line,reading,detai
 line         reading            detail
 ----         -------            ------
 水魚の交わり スイギョノマジワリ 水魚(スイギョ) / の / 交わり(マジワリ)
+
+PS> uv run .\yomi.py in.txt
+PS> cat .\out\out.txt
+琴瑟相和	キンシツショウワ	琴瑟(キンシツ) / 相(ショウ) / 和(ワ)
+飲鴆止渇	イン鴆止カツ	飲(イン) / 鴆止(鴆止) / 渇(カツ)
 ```
 
 ---
