@@ -97,7 +97,7 @@ class ParsedLine:
         ]
 
 
-def read_file(path: str) -> list:
+def read_file(path: str) -> List[str]:
     if len(path) < 1:
         c = pyperclip.paste()
         if len(c) < 1:
