@@ -32,6 +32,7 @@ class SudachiToken:
         self._surface = morpheme.surface()
         self._pos = morpheme.part_of_speech()[0]
         self._reading = morpheme.reading_form()
+        self._is_out_of_dictionary = morpheme.is_oov()
 
     @property
     def _katakana_surface(self) -> str:
@@ -42,14 +43,17 @@ class SudachiToken:
             ]
         )
 
-    def _is_verbatim(self) -> bool:
+    def _is_kana_inconvertible(self) -> bool:
         return (
-            "記号" in self._pos or "空白" in self._pos or self.reg.match(self._surface)
+            self._is_out_of_dictionary
+            or "記号" in self._pos
+            or "空白" in self._pos
+            or self.reg.match(self._surface)
         )
 
     @property
     def reading(self) -> str:
-        if self._is_verbatim():
+        if self._is_kana_inconvertible():
             if re.match(r"[ぁ-ん]", self._surface):
                 return self._katakana_surface
             return self._surface
@@ -61,7 +65,7 @@ class SudachiToken:
 
     @property
     def detail(self) -> str:
-        if self._is_verbatim():
+        if self._is_kana_inconvertible():
             return self._surface
 
         if len(self._reading) < 1:
