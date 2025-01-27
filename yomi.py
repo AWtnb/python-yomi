@@ -43,32 +43,29 @@ class SudachiToken:
             ]
         )
 
-    def _is_kana_inconvertible(self) -> bool:
+    def _is_verbatim(self) -> bool:
         return (
-            self._is_out_of_dictionary
-            or "記号" in self._pos
-            or "空白" in self._pos
-            or self.reg.match(self._surface)
+            "記号" in self._pos or "空白" in self._pos or self.reg.match(self._surface)
         )
 
     @property
     def reading(self) -> str:
-        if self._is_kana_inconvertible():
+        if self._is_verbatim():
             if re.match(r"[ぁ-ん]", self._surface):
                 return self._katakana_surface
             return self._surface
 
-        if len(self._reading) < 1:
+        if self._is_out_of_dictionary or len(self._reading) < 1:
             return self._surface
 
         return self._reading
 
     @property
     def detail(self) -> str:
-        if self._is_kana_inconvertible():
+        if self._is_verbatim():
             return self._surface
 
-        if len(self._reading) < 1:
+        if self._is_out_of_dictionary or len(self._reading) < 1:
             return self._surface + "(?)"
 
         return "{}({})".format(self._surface, self._reading)
