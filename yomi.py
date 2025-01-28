@@ -74,12 +74,11 @@ class SudachiToken:
 SUDACHI_TOKENIZER = Dictionary().create()
 
 
-class ParsedLine:
+class Line:
     reg_paren = re.compile(r"\(.+?\)|\[.+?\]|\uff08.+?\uff09|\uff3b.+?\uff3d")
     reg_noise = re.compile(r"　　[^\d]?\d.*$|　→.+$")
 
     def __init__(self, line: str) -> None:
-        self.raw_line = line
         self.line = line
 
     def trim_paren(self) -> None:
@@ -126,10 +125,10 @@ def main(path: str):
 
     out = []
     for line in lines:
-        pl = ParsedLine(line)
-        pl.trim_noise()
-        pl.trim_paren()
-        tokens = pl.tokens
+        l = Line(line)
+        l.trim_noise()
+        l.trim_paren()
+        tokens = l.tokens
         reading = "".join([token.reading for token in tokens])
         detail = " / ".join([token.detail for token in tokens])
 
