@@ -1,17 +1,17 @@
 """
-   Copyright 2025 AWtnb
+Copyright 2025 AWtnb
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
 import re
@@ -76,7 +76,6 @@ SUDACHI_TOKENIZER = Dictionary().create()
 
 class Line:
     reg_paren = re.compile(r"\(.+?\)|\[.+?\]|\uff08.+?\uff09|\uff3b.+?\uff3d")
-    reg_noise = re.compile(r"　　[^\d]?\d.*$|　→.+$")
 
     def __init__(self, line: str) -> None:
         self.line = line
@@ -84,8 +83,23 @@ class Line:
     def trim_paren(self) -> None:
         self.line = self.reg_paren.sub("", self.line)
 
+    def trim_nombre(self) -> None:
+        sep = "　　"
+        if sep in self.line:
+            i = self.line.rfind(sep)
+            tail = self.line[i + len(sep) :]
+            if 0 < len(tail) and any([(c in "0123456789") for c in tail]):
+                self.line = self.line[:i]
+
+    def trim_ref(self) -> None:
+        arrow = "　→"
+        if arrow in self.line:
+            self.line = self.line[: self.line.rfind(arrow)]
+
     def trim_noise(self) -> None:
-        self.line = self.reg_noise.sub("", self.line)
+        self.trim_paren()
+        self.trim_ref()
+        self.trim_nombre()
 
     @property
     def tokens(self) -> List[SudachiToken]:
@@ -127,7 +141,6 @@ def main(path: str):
     for line in lines:
         l = Line(line)
         l.trim_noise()
-        l.trim_paren()
         tokens = l.tokens
         reading = "".join([token.reading for token in tokens])
         detail = " / ".join([token.detail for token in tokens])
